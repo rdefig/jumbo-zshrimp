@@ -11,7 +11,9 @@
 ################################################################################
 
 typeset -aHg JUMBOZSHRIMP_PROMPT_SEGMENTS=(
+    prompt_virtualenv
     prompt_dir
+    prompt_git
 )
 
 PRIMARY_FG=white
@@ -23,30 +25,76 @@ BRANCH="\ue0a0"
 DETACHED="\u27a6"
 PLUSMINUS="\u00b1"
 
-function reset_typeface() {
-    print -n "%{%f%k%b%}"
+function prompt_segment_start() {
+    local fg bg
+    [[ -n $1 ]] && fg="%F{$2}"
+    [[ -n $2 ]] && bg="%K{$1}"
+    print -n "%{%f%k%b%}%{$fg$bg%}$SEGMENT_START"
 }
 
-function prompt_segment() {
-    local fg bg fg_ bg_
-    [[ -n $2 ]] && fg="%F{$2}" && fg_="%F{$3}" || fg="%f"
-    [[ -n $3 ]] && bg="%K{$3}" && bg_="%K{$2}" || bg="%k"
-    [[ $4 = "bold" ]] && bf="%B" || bf="%b"
-    print -n "%{$fg_$bg_%}$SEGMENT_START"
+function prompt_segment_mid() {
+    local fg bg bf
+    [[ -n $2 ]] && fg="%F{$2}"
+    [[ -n $3 ]] && bg="%K{$3}"
+    [[ $4 = "bold" ]] && bf="%B"
     [[ -n $1 ]] && print -n "%{$fg$bg$bf%}$1"
-    print -n "%{$fg_$bg_%}$SEGMENT_END "
-    reset_typeface
+}
+
+function prompt_segment_end() {
+    local fg bg
+    [[ -n $1 ]] && fg="%F{$2}"
+    [[ -n $2 ]] && bg="%K{$1}"
+    print -n "%{$fg$bg%}$SEGMENT_END%{%f%k%b%} "
+}
+
+function prompt_segment_full() {
+    prompt_segment_start $2 $3
+    prompt_segment_mid $1 $2 $3 $4
+    prompt_segment_end $2 $3
+}
+
+function prompt_virtualenv() {
+    if [[ -n $VIRTUAL_ENV ]]; then
+        prompt_segment_full "$(basename $VIRTUAL_ENV)" black cyan
+    fi
 }
 
 function prompt_dir() {
     local status_color
     [[ $RETVAL -ne 0 ]] && status_color=red || status_color=blue
-    prompt_segment '%~' black $status_color
+    prompt_segment_full "%~" black $status_color
+}
+
+function is_dirty() {
+    test -n "$(git status --porcelain --ignore-submodules)"
+}
+
+function sync_status() {
+
+}
+
+function prompt_git() {
+    local color ref
+    ref="$vcs_info_msg_0_"
+    if [[ -n "$ref" ]]; then
+        if is_dirty; then
+            color=yellow
+            ref="$ref $PLUSMINUS"
+        else
+            color=green
+        fi
+        if [[ "${ref/.../}" = "$ref" ]]; then
+            ref="$BRANCH $ref"
+        else
+            ref="$DETACHED ${ref/.../}"
+        fi
+        prompt_segment_full "$ref" black $color
+    fi
 }
 
 function prompt_jumbozshrimp_main() {
-    for segment in "${JUMBOZSHRIMP_PROMPT_SEGMENTS[@]}"; do
-        [[ -n $segment ]] && $segment
+    for prompt_segment in "${JUMBOZSHRIMP_PROMPT_SEGMENTS[@]}"; do
+        [[ -n $prompt_segment ]] && $prompt_segment
     done
 }
 
@@ -55,9 +103,8 @@ function prompt_jumbozshrimp_precmd() {
 
     vcs_info
 
-    reset_typeface
     PROMPT="$(prompt_jumbozshrimp_main)"
-    RPROMPT=''
+    RPROMPT=""
 }
 
 function prompt_jumbozshrimp_setup() {
@@ -68,10 +115,10 @@ function prompt_jumbozshrimp_setup() {
 
     add-zsh-hook precmd prompt_jumbozshrimp_precmd
 
-    zstyle ':vcs_info:*' enable git
-    zstyle ':vcs_info:*' check-for-changes false
-    zstyle ':vcs_info:git*' formats '%b'
-    zstyle ':vcs_info:git*' actionformats '%b (%a)'
+    zstyle ":vcs_info:*" enable git
+    zstyle ":vcs_info:*" check-for-changes false
+    zstyle ":vcs_info:git*" formats "%b"
+    zstyle ":vcs_info:git*" actionformats "%b (%a)"
 }
 
 prompt_jumbozshrimp_setup "$@"
