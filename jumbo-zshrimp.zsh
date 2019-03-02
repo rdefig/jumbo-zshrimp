@@ -21,6 +21,8 @@ PRIMARY_BG=black
 
 SEGMENT_START="\ue0b6"
 SEGMENT_END="\ue0b4"
+CURVE_LEFT="\ue0b7"
+CURVE_RIGHT="\ue0b5"
 BRANCH="\ue0a0"
 DETACHED="\u27a6"
 PLUSMINUS="\u00b1"
@@ -44,13 +46,14 @@ function prompt_segment_end() {
     local fg bg
     [[ -n $1 ]] && fg="%F{$2}"
     [[ -n $2 ]] && bg="%K{$1}"
-    print -n "%{$fg$bg%}$SEGMENT_END%{%f%k%b%} "
+    print -n "%{$fg$bg%}$SEGMENT_END%{%f%k%b%}"
 }
 
 function prompt_segment_full() {
     prompt_segment_start $2 $3
     prompt_segment_mid $1 $2 $3 $4
     prompt_segment_end $2 $3
+    print -n " "
 }
 
 function prompt_virtualenv() {
@@ -69,26 +72,45 @@ function is_dirty() {
     test -n "$(git status --porcelain --ignore-submodules)"
 }
 
-function sync_status() {
-
-}
-
 function prompt_git() {
-    local color ref
+    local branch_color sync_color ref
+    local upstream local_ remote base
+
     ref="$vcs_info_msg_0_"
+
     if [[ -n "$ref" ]]; then
         if is_dirty; then
-            color=yellow
+            branch_color=yellow
             ref="$ref $PLUSMINUS"
         else
-            color=green
+            branch_color=green
         fi
+        
+        upstream=${1:-'@{u}'}
+        local_=$(git rev-parse @)
+        remote=$(git rev-parse "$upstream")
+        base=$(git merge-base @ "$upstream")
+        if [[ $local_ = $remote ]]; then
+            sync_color=$branch_color
+        elif [[ $local_ = $base ]]; then
+            sync_color=red
+        elif [[ $remote = $base ]]; then
+            sync_color=blue
+        else
+            sync_color=magenta
+        fi
+
         if [[ "${ref/.../}" = "$ref" ]]; then
             ref="$BRANCH $ref"
         else
             ref="$DETACHED ${ref/.../}"
         fi
-        prompt_segment_full "$ref" black $color
+
+        print -n "%{%F{$sync_color}%}$CURVE_LEFT$CURVE_LEFT$CURVE_LEFT%{%f%}"
+        prompt_segment_start black $branch_color
+        prompt_segment_mid "$ref" black $branch_color
+        prompt_segment_end black $branch_color
+        print -n "%{%F{$sync_color}%}$CURVE_RIGHT$CURVE_RIGHT$CURVE_RIGHT%{%f%} "
     fi
 }
 
