@@ -11,6 +11,7 @@
 ################################################################################
 
 typeset -aHg JUMBOZSHRIMP_PROMPT_SEGMENTS=(
+    prompt_context
     prompt_virtualenv
     prompt_dir
     prompt_git
@@ -21,8 +22,8 @@ PRIMARY_BG=black
 
 SEGMENT_START="\ue0b6"
 SEGMENT_END="\ue0b4"
-CURVE_LEFT="\ue0b7"
-CURVE_RIGHT="\ue0b5"
+CURVE_LEFT="("
+CURVE_RIGHT=")"
 BRANCH="\ue0a0"
 DETACHED="\u27a6"
 PLUSMINUS="\u00b1"
@@ -54,6 +55,14 @@ function prompt_segment_full() {
     prompt_segment_mid $1 $2 $3 $4
     prompt_segment_end $2 $3
     print -n " "
+}
+
+function prompt_context() {
+    local user=`whoami`
+    if [[ "$user" != "$DEFAULT_USER" || -n "$SSH_CONNECTION" ]]; then
+        prompt_segment_mid "%(!.%{%F{magenta}%}.)$user@%m" $PRIMARY_FG $PRIMARY_BG bold
+        prompt_segment_end $PRIMARY_BG $PRIMARY_BG
+    fi
 }
 
 function prompt_virtualenv() {
@@ -106,11 +115,11 @@ function prompt_git() {
             ref="$DETACHED ${ref/.../}"
         fi
 
-        print -n "%{%F{$sync_color}%}$CURVE_LEFT$CURVE_LEFT$CURVE_LEFT%{%f%}"
+        print -n "%{%F{$sync_color}%B%}$CURVE_LEFT$CURVE_LEFT%{%f%b%}"
         prompt_segment_start black $branch_color
         prompt_segment_mid "$ref" black $branch_color
         prompt_segment_end black $branch_color
-        print -n "%{%F{$sync_color}%}$CURVE_RIGHT$CURVE_RIGHT$CURVE_RIGHT%{%f%} "
+        print -n "%{%F{$sync_color}%B%}$CURVE_RIGHT$CURVE_RIGHT%{%f%b%} "
     fi
 }
 
