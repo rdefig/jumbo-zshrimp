@@ -60,8 +60,7 @@ function prompt_segment_full() {
 function prompt_context() {
     local user=`whoami`
     if [[ "$user" != "$DEFAULT_USER" || -n "$SSH_CONNECTION" ]]; then
-        prompt_segment_mid "%(!.%{%F{magenta}%}.)$user@%m" $PRIMARY_FG $PRIMARY_BG bold
-        prompt_segment_end $PRIMARY_BG $PRIMARY_BG
+        prompt_segment_mid "%(!.%{%F{magenta}%}.)$user@%m " $PRIMARY_FG $PRIMARY_BG bold
     fi
 }
 
