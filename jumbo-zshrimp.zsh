@@ -5,9 +5,6 @@
 # Jumbo ZSHrimp
 # A delicious zsh theme. Preferably covered in coconut and deep-fried.
 #
-# Inspired by agnoster's Theme:
-# https://gist.github.com/3712874
-#
 ################################################################################
 
 FG="%{\033[38;2;%}"
@@ -398,7 +395,7 @@ function prompt_context() {
 
 function prompt_virtualenv() {
     if [[ -n $VIRTUAL_ENV ]]; then
-        draw_segment "$(basename ${VIRTUAL_ENV})" ORANGE BLACK
+        draw_segment "$(basename ${VIRTUAL_ENV})" PURPLE BLACK
     fi
 }
 
@@ -438,7 +435,7 @@ function prompt_git() {
             if [ $local_sha = $remote_sha ]; then
                 remote_color=$local_color
             elif [ $local_sha = $base_sha ]; then
-                remote_color=RED
+                remote_color=ORANGE
             elif [ $remote_sha = $base_sha ]; then
                 remote_color=CYAN
             else
@@ -455,10 +452,8 @@ function prompt_git() {
 
         transition="${FG}${(P)grad1}${DOT}${FG}${(P)grad2}${DOT}${FG}${(P)grad3}${DOT}"
         remote_seg="${FG}${(P)remote_color}${remote_ref}"
-        # remote_seg="${REMOTE} ${remote_ref}"
 
         draw_segment "${local_seg} ${transition} ${remote_seg}" $local_color BLACK
-        # draw_segment "${remote_seg}" $remote_color BLACK
     fi
 }
 
